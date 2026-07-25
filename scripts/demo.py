@@ -1,23 +1,23 @@
 #!/usr/bin/env python3
-"""
-GeoJEPA Demo — Gradio интерфейс с реальными предсказаниями.
-Исправлено: возвращает 5 значений для 5 Textbox.
-"""
 import os
 import sys
+
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, PROJECT_ROOT)
+
 import argparse
 import gradio as gr
 import torch
 import numpy as np
 from PIL import Image
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-
-from src.inference.predictor import GeoPredictor
+try:
+    from src.inference.predictor import GeoPredictor
+except ImportError:
+    from src.inference.predictor import Predictor as GeoPredictor
 
 
 def get_continent(lat, lon):
-    """Определяет континент по координатам."""
     if lat > 35 and lon > -10 and lon < 40:
         return "Europe/Asia"
     elif lat > 15 and lon > -20 and lon < 55:
@@ -36,21 +36,15 @@ def get_continent(lat, lon):
 
 
 def predict(image):
-    """
-    Принимает PIL.Image, возвращает 5 строк для 5 Textbox.
-    """
     if image is None:
         return "Нет изображения", "—", "0%", "—", "Загрузите спутниковый снимок"
 
-    # Инициализация предиктора (ленивая)
     if not hasattr(predict, 'predictor'):
         checkpoint = getattr(predict, 'checkpoint', 'checkpoints/best_model.pt')
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
         predict.predictor = GeoPredictor(checkpoint, device=device)
 
-    # Предсказание
     pred = predict.predictor.predict(image)
-
     lat = pred.get('lat', 0.0)
     lon = pred.get('lon', 0.0)
     confidence = pred.get('confidence', 0.0)
@@ -65,7 +59,6 @@ def predict(image):
         f"Точность зависит от качества обучения."
     )
 
-    # ✅ ВАЖНО: возвращаем ровно 5 значений для 5 Textbox
     return coords, continent, conf_str, map_link, description
 
 
@@ -100,4 +93,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
