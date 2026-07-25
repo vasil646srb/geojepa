@@ -9,7 +9,6 @@ pycache/
 dist/
 build/
 checkpoints/
-data/
 notebooks/.ipynb_checkpoints/
 .env
 *.pt
